@@ -1,72 +1,39 @@
-import subprocess
+import smbus
 
-#Set your VDD Here
+def setVoltage(voltage, VDD, address):
+    """
+    Sets the voltage for a DAC5571 chip connected to an I2C bus.
 
-VDD = 3.3
+    Args:
+        voltage (float): The desired voltage to set.
+        VDD (float): The maximum voltage value.
+        address (int): The I2C address of the DAC5571 (either 0x4d or 0x4c).
 
+    Returns:
+        None
+    """
+    # Initialize the SMBus object for the specified I2C bus
+    bus = smbus.SMBus(1)
 
-#Set the DAC5571 Address, Either 0x4d or 0x4c
+    # Normalize the voltage value and convert it to a hexadecimal string
+    normalized_voltage = int(voltage / VDD * 4095)
+    hex_voltage = hex(normalized_voltage)
+    hex_list = list(hex_voltage)
 
-address = "0x4d"
+    length = len(hex_list)
 
-while(True):
-
-
-    bool_value = True
-    voltage = 0
-
-    while (bool_value):
-            voltagein = input("Enter Voltage 0-"+ str(VDD)+  ": \n")
-
-            if (voltagein == "exit" or voltagein == "quit" or voltagein == "q"):
-                exit()
-
-            try:
-                attempt = float(voltagein)
-            except ValueError:
-                print("Wrong Value Type")
-                continue
-
-            voltage = float(voltagein)
-
-            if (voltage <= VDD and voltage >= 0 ):
-                bool_value = False
-
-    normalizedvoltage = int(voltage / VDD * 4095)
-
-
-
-    HexVoltage =  hex(normalizedvoltage)
-
-    hexlist = list(HexVoltage)
-
-    length = len(hexlist)
-
-    majordigit = hexlist[2]
-    minordigit = ''.join(hexlist[3:5])
-
-    bashCommand = "i2cset -y 1 "+address+" 0x0" + majordigit + " 0x" + minordigit
-
-
+    # Extract major and minor digits from the hexadecimal string and construct the I2C compatible command to set the DAC
+    major_digit = hex_list[2]
+    minor_digit = ''.join(hex_list[3:5])
+    # These three if loops configure the address correctly depending on how many digits the hex output is
     if length == 4:
-        minordigit = ''.join(hexlist[2:4])
-        bashCommand = "i2cset -y 1 "+address+" 0x00 0x" + minordigit
+        minor_digit = ''.join(hex_list[2:4])
+        bus.write_i2c_block_data(address, 0x00, [int(minor_digit, 16)])
 
     if length == 3:
-        minordigit = hexlist[2]
-        bashCommand = "i2cset -y 1 "+address+" 0x00 0x0" + minordigit
+        minor_digit = hex_list[2]
+        bus.write_i2c_block_data(address, 0x00, [int('0' + minor_digit, 16)])
 
-    print(bashCommand)
+    if length == 5:
+        bus.write_i2c_block_data(address, int('0' + major_digit, 16), [int(minor_digit, 16)])
 
-    try:
-        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()\
-
-    except subprocess.CalledProcessError as e:
-        print("Error executing command: ", e)
-        continue
-
-
-    print("Voltage Propertly Set\n--------------------------------")
-
-    continue
