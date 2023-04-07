@@ -1,6 +1,6 @@
 import smbus
 
-def set_voltage(voltage, VDD, address):
+def setVoltage(voltage, VDD, address):
     """
     Sets the voltage for a DAC5571 chip connected to an I2C bus.
 
