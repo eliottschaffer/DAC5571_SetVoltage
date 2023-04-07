@@ -6,3 +6,5 @@ setVoltage.py is a function that can be included in any python file. An example 
 
 
 The original method using Bash commands and i2c set is also included
+
+Created By Eliott Schaffer and Zhuoru Li
